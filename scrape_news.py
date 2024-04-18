@@ -31,4 +31,4 @@ for outlet_name, outlet_url in news_outlets:
         continue
 
     print('End scraping and storing for ', outlet_name, '. Titles stored were:', sep='')
-    print(titles, end='\n\n')
+    print(*titles, sep='\n', end='\n\n')
