@@ -5,17 +5,18 @@ import time
 import sqlite3
 
 
-def scrape_from_single_outlet(outlet_name, outlet_url):
+def scrape_SCMP(outlet_url, news_title_h_level='h2',
+                max_scroll_n=10, max_n_of_title_to_scrape=30, scroll_y=2000,
+                sleep_time=5):
     """
-    :param outlet_name: str, could be 'SCMP', etc
-    :param outlet_url:
-    :return: a list of str, each element being a title
+    :param outlet_url: pass a str when using this function
+    :param news_title_h_level: default to 'h2'
+    :param max_scroll_n: you can scroll down indefinitely for SCMP, need a limit; default to 10
+    :param max_n_of_title_to_scrape:
+    :param scroll_y: default to 2000; otherwise, too small a movement at a time
+    :param sleep_time: default to 5; allow some time for the scroll action to happen
+    :return: a list of strings, each being a news title
     """
-    max_scroll_n = 10
-    max_n_of_title_to_scrape = 50
-    max_n_of_title_to_store = 30  # these 2 should differ b/c some titles are useless
-    scroll_y = 2000  # otherwise, too small
-    sleep_time = 5
 
     driver = webdriver.Chrome()
     driver.get(outlet_url)
@@ -30,11 +31,11 @@ def scrape_from_single_outlet(outlet_name, outlet_url):
         print('Scrolled', scroll_n, 'time(s).')
 
         # grab titles
-        h2s = BeautifulSoup(driver.page_source, 'html.parser').find_all('h2')
+        h_s = BeautifulSoup(driver.page_source, 'html.parser').find_all(news_title_h_level)
         titles = []
-        for i, h2_i in enumerate(h2s):
+        for i, h_i in enumerate(h_s):
             try:
-                titles.append(h2_i.text)
+                titles.append(h_i.text)
             except AttributeError as err:
                 print(err)
 
@@ -48,11 +49,68 @@ def scrape_from_single_outlet(outlet_name, outlet_url):
             n_of_title_previous_iteration = len(titles)
 
     # somehow clean title
-    if outlet_name == 'SCMP':
-        titles = [i.replace('\n', '').strip() for i in titles]
-        titles = [i for i in titles if 'Opinion |' not in i and 'Editorial | ' not in i]  # opinion, etc, not useful
+    titles = [i.replace('\n', '').strip() for i in titles]
+    titles = [i for i in titles if 'Opinion |' not in i and 'Editorial | ' not in i]  # opinion, etc, not useful
 
-    return titles[0:max_n_of_title_to_store]
+    return titles[0:max_n_of_title_to_scrape]
+
+
+def scrape_TheStandard(outlet_url, news_title_h_level='h1',
+                       sleep_time=10):
+    """
+    :param outlet_url: pass a str when using this function
+    :param news_title_h_level: default to 'h1'
+    :param sleep_time: default to 10; allow some time for this to work
+    :return: a list of strings, each being a news title
+    """
+
+    driver = webdriver.Chrome()
+    driver.get(outlet_url)
+    time.sleep(sleep_time)
+
+    # grab titles
+    h_s = BeautifulSoup(driver.page_source, 'html.parser').find_all(news_title_h_level)
+    driver.quit()
+    titles = []
+    for i, h_i in enumerate(h_s):
+        try:
+            titles.append(h_i.text)
+        except AttributeError as err:
+            print(err)
+
+    titles = [i for i in titles if i != 'The Standard']
+    # in hmtl file, the newspaper name (The Standard) is on the same level of heading with other news titles
+    # delete 'The Standard' as it's non-informative
+
+    return titles
+
+
+def scrape_RTHK(outlet_url, news_title_h_level='h4',
+                max_n_of_title_to_scrape=30,
+                sleep_time=10):
+    """
+    :param outlet_url: pass a str when using this function
+    :param news_title_h_level: default to 'h4'
+    :param max_n_of_title_to_scrape: RTHK contains too many titles on one page, set a limit; default to 30
+    :param sleep_time: default to 10; allow some time for this to work
+    :return: a list of strings, each being a news title
+    """
+
+    driver = webdriver.Chrome()
+    driver.get(outlet_url)
+    time.sleep(sleep_time)
+
+    # grab titles
+    h_s = BeautifulSoup(driver.page_source, 'html.parser').find_all(news_title_h_level)
+    driver.quit()
+    titles = []
+    for i, h_i in enumerate(h_s):
+        try:
+            titles.append(h_i.text)
+        except AttributeError as err:
+            print(err)
+
+    return titles
 
 
 def store_for_single_outlet(outlet_name, titles, today, db_dir):

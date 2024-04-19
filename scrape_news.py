@@ -1,12 +1,14 @@
-from datetime import datetime
+import datetime
 import pytz
 
-from utils import scrape_from_single_outlet, store_for_single_outlet
+import utils
 
 
 proj_dir = '/Users/Chen/project/sentiment_analysis/'
-today = datetime.now(pytz.timezone('Asia/Hong_Kong')).date()
+today = datetime.datetime.now(pytz.timezone('Asia/Hong_Kong')).date()
 news_outlets = (('SCMP', 'https://www.scmp.com/topics/hong-kong-stock-exchange'),
+                ('TheStandard', 'https://www.thestandard.com.hk/section-news-list/section/finance/'),
+                ('RTHK', 'https://news.rthk.hk/rthk/en/latest-news/finance.htm'),
                 )
 
 print('******************************')
@@ -17,14 +19,15 @@ for outlet_name, outlet_url in news_outlets:
     print('Start for ', outlet_name, '.', sep='')
 
     try:
-        titles = scrape_from_single_outlet(outlet_name, outlet_url)
+        scrape = getattr(utils, 'scrape_' + outlet_name)
+        titles = scrape(outlet_url)
     except Exception as err:
         print('Error occurred when scraping from ', outlet_name, '!', sep='')
         print(err)
         continue
 
     try:
-        store_for_single_outlet(outlet_name, titles, today, proj_dir)
+        utils.store_for_single_outlet(outlet_name, titles, today, proj_dir)
     except Exception as err:
         print('Error occurred when storing for ', outlet_name, '!', sep='')
         print(err)
