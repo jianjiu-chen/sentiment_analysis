@@ -119,7 +119,7 @@ def store_for_single_outlet(outlet_name, titles, today, db_dir):
     :param titles: a list of str, each element being a title
     :param today: type of datetime.date
     :param db_dir: directory, where the database locates
-    :return:
+    :return: nothing
     """
     data_to_insert = [(str(today), i) for i in titles]
     with sqlite3.connect(db_dir + "news.db") as con:
